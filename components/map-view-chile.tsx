@@ -8,7 +8,7 @@ import { Download, Layers, MapIcon } from "lucide-react"
 import "../app/globals.css"
 
 // Tipos para los edificios
-type Building = {
+export type Building = {
   id: string
   name: string
   position: [number, number, number]
@@ -247,30 +247,6 @@ export default function MapViewChile() {
               onClick={() => loadCityBuildings("santiago")}
             >
               Santiago
-            </button>
-            <button
-              className={`btn ${selectedCity === "valparaiso" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => loadCityBuildings("valparaiso")}
-            >
-              Valparaíso
-            </button>
-            <button
-              className={`btn ${selectedCity === "concepcion" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => loadCityBuildings("concepcion")}
-            >
-              Concepción
-            </button>
-            <button
-              className={`btn ${selectedCity === "antofagasta" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => loadCityBuildings("antofagasta")}
-            >
-              Antofagasta
-            </button>
-            <button
-              className={`btn ${selectedCity === "laserena" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => loadCityBuildings("laserena")}
-            >
-              La Serena
             </button>
           </div>
         </div>

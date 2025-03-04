@@ -111,9 +111,10 @@ export default function Santiago3DMap() {
   const [quality, setQuality] = useState<"low" | "medium" | "high">("medium")
   const [showStreets, setShowStreets] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
-
+    
   const mapRef = useRef(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+
 
   // Configuración de calidad
   const qualitySettings = useMemo(
@@ -625,12 +626,14 @@ export default function Santiago3DMap() {
             </>
           ) : (
             <Canvas
-              camera={{ position: [0, 200, 500], fov: 60 }}
-              onCreated={({ camera }) => {
-                if (camera instanceof THREE.PerspectiveCamera) {
-                  cameraRef.current = camera
-                }
-              }}
+            camera={{ position: [0, 200, 500], fov: 60 }}
+            onCreated={({ camera }) => {
+              // Asegurarnos de que la cámara es del tipo correcto
+              if (camera instanceof THREE.PerspectiveCamera) {
+                // Usar MutableRefObject nos permite asignar a .current
+                cameraRef.current = camera
+              }
+            }}
             >
               {showStats && <Stats />}
 

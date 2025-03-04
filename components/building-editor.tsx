@@ -155,7 +155,7 @@ export default function BuildingEditor({
       {editable && groupRef.current && (
         <TransformControls
           ref={transformControlsRef}
-          object={groupRef}
+          object={groupRef.current}
           mode={mode}
           size={1}
           onMouseUp={handleTransformEnd}

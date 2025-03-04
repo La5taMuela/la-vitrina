@@ -1,20 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-
-// Tipos para los edificios
-type Building = {
-  id: string
-  name: string
-  position: [number, number, number]
-  rotation: [number, number, number]
-  scale: [number, number, number]
-  model?: string
-  color: string
-  coordinates?: [number, number] // Coordenadas geográficas [lat, lng]
-}
 
 interface MapComponentProps {
   center: [number, number]
@@ -22,10 +10,16 @@ interface MapComponentProps {
   onZoomChange: (zoom: number) => void
   onCenterChange: (center: [number, number]) => void
   onClick: (coordinates: [number, number]) => void
-  buildings: Building[]
-  onSelectBuilding: (building: Building | null) => void
-  selectedBuilding: Building | null
   onMouseMove?: (coordinates: [number, number]) => void
+  buildings?: any[]
+  onSelectBuilding?: (building: any | null) => void
+  selectedBuilding?: any | null
+}
+
+interface Building {
+  id: number
+  coordinates: [number, number]
+  // other building properties
 }
 
 export default function MapComponent({
@@ -34,14 +28,10 @@ export default function MapComponent({
   onZoomChange,
   onCenterChange,
   onClick,
-  buildings,
-  onSelectBuilding,
-  selectedBuilding,
   onMouseMove,
 }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const markersRef = useRef<{ [key: string]: L.Marker }>({})
   const [isMapReady, setIsMapReady] = useState(false)
   const isInitializedRef = useRef(false)
 
@@ -51,6 +41,8 @@ export default function MapComponent({
 
     // Asegurarse de que el contenedor del mapa existe y tiene dimensiones
     if (!mapContainerRef.current) return
+
+    console.log("Initializing map...")
 
     // Esperar a que el DOM esté completamente cargado
     const initMap = () => {
@@ -65,7 +57,7 @@ export default function MapComponent({
       })
 
       // Crear el mapa
-      const map = L.map(mapContainerRef.current, {
+      const map = L.map(mapContainerRef.current!, {
         center: center,
         zoom: zoom,
         zoomControl: false, // Desactivamos los controles de zoom predeterminados
@@ -103,13 +95,7 @@ export default function MapComponent({
 
       // Usar un enfoque más seguro para el evento mousemove
       // Solo activar cuando el mouse está sobre el mapa
-      mapContainerRef.current.addEventListener("mouseover", () => {
-        map.on("mousemove", handleMouseMove)
-      })
-
-      mapContainerRef.current.addEventListener("mouseout", () => {
-        map.off("mousemove", handleMouseMove)
-      })
+    
 
       mapRef.current = map
       setIsMapReady(true)
@@ -125,6 +111,7 @@ export default function MapComponent({
 
     // Limpiar el mapa al desmontar el componente
     return () => {
+      console.log("Cleaning up map...")
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -159,84 +146,6 @@ export default function MapComponent({
     }
   }, [center, zoom, isMapReady])
 
-  // Función para crear un icono de edificio
-  const createBuildingIcon = useCallback((building: Building, isSelected: boolean) => {
-    const iconSize = isSelected ? 30 : 25
-
-    return L.divIcon({
-      className: "custom-div-icon",
-      html: `<div style="
-        width: ${iconSize}px; 
-        height: ${iconSize}px; 
-        background-color: ${building.color}; 
-        border: ${isSelected ? "3px solid #3b82f6" : "1px solid #000"};
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-      ">B</div>`,
-      iconSize: [iconSize, iconSize],
-      iconAnchor: [iconSize / 2, iconSize / 2],
-    })
-  }, [])
-
-  // Actualizar los marcadores de los edificios
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !isMapReady) return
-
-    try {
-      // Eliminar marcadores que ya no existen
-      Object.keys(markersRef.current).forEach((id) => {
-        if (!buildings.find((b) => b.id === id)) {
-          markersRef.current[id].remove()
-          delete markersRef.current[id]
-        }
-      })
-
-      // Añadir o actualizar marcadores
-      buildings.forEach((building) => {
-        if (building.coordinates) {
-          console.log(`Procesando edificio ${building.id} en coordenadas:`, building.coordinates)
-
-          const isSelected = selectedBuilding?.id === building.id
-          const buildingIcon = createBuildingIcon(building, isSelected)
-
-          if (markersRef.current[building.id]) {
-            // Actualizar marcador existente
-            markersRef.current[building.id].setLatLng(building.coordinates)
-            markersRef.current[building.id].setIcon(buildingIcon)
-            console.log(`Marcador actualizado para edificio ${building.id}`)
-          } else {
-            // Crear nuevo marcador
-            try {
-              const marker = L.marker(building.coordinates, {
-                icon: buildingIcon,
-              }).addTo(map)
-
-              // Añadir evento de clic
-              marker.on("click", () => {
-                onSelectBuilding(building)
-              })
-
-              markersRef.current[building.id] = marker
-              console.log(`Nuevo marcador creado para edificio ${building.id}`)
-            } catch (error) {
-              console.error(`Error al crear marcador para edificio ${building.id}:`, error)
-            }
-          }
-        } else {
-          console.warn(`Edificio ${building.id} no tiene coordenadas definidas`)
-        }
-      })
-    } catch (error) {
-      console.error("Error al actualizar marcadores:", error)
-    }
-  }, [buildings, selectedBuilding, isMapReady, onSelectBuilding, createBuildingIcon])
-
   // Invalidar el tamaño del mapa cuando cambie el tamaño de la ventana
   useEffect(() => {
     const handleResize = () => {
@@ -254,4 +163,3 @@ export default function MapComponent({
 
   return <div id="map" ref={mapContainerRef} style={{ width: "100%", height: "100%" }}></div>
 }
-
